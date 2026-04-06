@@ -1,0 +1,25 @@
+-- ============================================================
+-- Vibe Coding Platform - Seed Data
+-- ============================================================
+-- Note: This seed file uses placeholder UUIDs.
+-- In production, users are created through Supabase Auth,
+-- and profiles are auto-created via the on_auth_user_created trigger.
+--
+-- To seed with real data, first create users through the Supabase
+-- Auth dashboard, then insert projects/snippets referencing those user IDs.
+-- ============================================================
+
+-- Example: After creating a user via Auth, you can insert sample projects:
+--
+-- insert into public.projects (user_id, title, description, language, code_content, is_public)
+-- values
+--   ('<your-user-uuid>', 'Hello World API', 'A simple Express.js REST API', 'typescript',
+--    'import express from "express";\nconst app = express();\napp.get("/", (req, res) => res.json({ message: "Hello World" }));\napp.listen(3000);',
+--    true),
+--   ('<your-user-uuid>', 'React Counter', 'A basic React counter component', 'typescript',
+--    'import { useState } from "react";\nexport default function Counter() {\n  const [count, setCount] = useState(0);\n  return <button onClick={() => setCount(c => c + 1)}>Count: {count}</button>;\n}',
+--    true);
+--
+-- insert into public.snippets (user_id, title, code, language, description)
+-- values
+--   ('<your-user-uuid>', 'Debounce Hook', 'import { useEffect, useState } from "react";\nexport function useDebounce<T>(value: T, delay: number): T {\n  const [debouncedValue, setDebouncedValue] = useState(value);\n  useEffect(() => {\n    const handler = setTimeout(() => setDebouncedValue(value), delay);\n    return () => clearTimeout(handler);\n  }, [value, delay]);\n  return debouncedValue;\n}', 'typescript', 'Custom React hook for debouncing values');

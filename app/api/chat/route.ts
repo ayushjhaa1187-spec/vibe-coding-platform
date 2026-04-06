@@ -22,13 +22,34 @@ interface BodyData {
 export async function POST(req: Request) {
   const checkResult = await checkBotId()
   if (checkResult.isBot) {
-    return NextResponse.json({ error: `Bot detected` }, { status: 403 })
+    return NextResponse.json({ error: 'Bot detected' }, { status: 403 })
   }
 
-  const [models, { messages, modelId = DEFAULT_MODEL, reasoningEffort }] =
-    await Promise.all([getAvailableModels(), req.json() as Promise<BodyData>])
+  let models: Awaited<ReturnType<typeof getAvailableModels>>
+  let body: BodyData
 
-  const model = models.find((model) => model.id === modelId)
+  try {
+    [models, body] = await Promise.all([
+      getAvailableModels(),
+      req.json() as Promise<BodyData>,
+    ])
+  } catch {
+    return NextResponse.json(
+      { error: 'Invalid request body' },
+      { status: 400 }
+    )
+  }
+
+  const { messages, modelId = DEFAULT_MODEL, reasoningEffort } = body
+
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return NextResponse.json(
+      { error: 'Messages array is required and must not be empty' },
+      { status: 400 }
+    )
+  }
+
+  const model = models.find((m) => m.id === modelId)
   if (!model) {
     return NextResponse.json(
       { error: `Model ${modelId} not found.` },
@@ -40,35 +61,36 @@ export async function POST(req: Request) {
     stream: createUIMessageStream({
       originalMessages: messages,
       execute: async ({ writer }) => {
+        // Convert ALL messages to model format to ensure full conversation
+        // history is sent, preventing the same-response bug.
+        const allMessages = messages.map((message) => {
+          message.parts = message.parts.map((part) => {
+            if (part.type === 'data-report-errors') {
+              return {
+                type: 'text' as const,
+                text:
+                  `There are errors in the generated code. This is the summary of the errors we have:\n` +
+                  `\`\`\`${part.data.summary}\`\`\`\n` +
+                  (part.data.paths?.length
+                    ? `The following files may contain errors:\n` +
+                      `\`\`\`${part.data.paths?.join('\n')}\`\`\`\n`
+                    : '') +
+                  `Fix the errors reported.`,
+              }
+            }
+            return part
+          })
+          return message
+        })
+
         const result = streamText({
           ...getModelOptions(modelId, { reasoningEffort }),
           system: prompt,
-          messages: await convertToModelMessages(
-            messages.map((message) => {
-              message.parts = message.parts.map((part) => {
-                if (part.type === 'data-report-errors') {
-                  return {
-                    type: 'text',
-                    text:
-                      `There are errors in the generated code. This is the summary of the errors we have:\n` +
-                      `\`\`\`${part.data.summary}\`\`\`\n` +
-                      (part.data.paths?.length
-                        ? `The following files may contain errors:\n` +
-                          `\`\`\`${part.data.paths?.join('\n')}\`\`\`\n`
-                        : '') +
-                      `Fix the errors reported.`,
-                  }
-                }
-                return part
-              })
-              return message
-            })
-          ),
+          messages: await convertToModelMessages(allMessages),
           stopWhen: stepCountIs(20),
           tools: tools({ modelId, writer }),
           onError: (error) => {
-            console.error('Error communicating with AI')
-            console.error(JSON.stringify(error, null, 2))
+            console.error('Error communicating with AI:', error)
           },
         })
         result.consumeStream()
@@ -83,5 +105,5 @@ export async function POST(req: Request) {
         )
       },
     }),
-  });
+  })
 }
