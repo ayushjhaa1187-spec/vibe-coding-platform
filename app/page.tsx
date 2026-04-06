@@ -1,5 +1,6 @@
 import { Chat } from './chat'
 import { FileExplorer } from './file-explorer'
+import { Footer } from '@/components/footer'
 import { Header } from './header'
 import { Horizontal, Vertical } from '@/components/layout/panels'
 import { Logs } from './logs'
@@ -18,17 +19,17 @@ export default async function Page() {
   return (
     <>
       <Welcome defaultOpen={banner} onDismissAction={hideBanner} />
-      <div className="flex flex-col h-screen max-h-screen overflow-hidden p-2 space-x-2">
+      <div className="flex flex-col h-screen max-h-screen overflow-hidden">
         <Header className="flex items-center w-full" />
-        <ul className="flex space-x-5 font-mono text-sm tracking-tight px-1 py-2 md:hidden">
+        <ul className="flex space-x-4 text-sm tracking-tight px-3 py-2 md:hidden border-b border-border bg-card">
           <TabItem tabId="chat">Chat</TabItem>
           <TabItem tabId="preview">Preview</TabItem>
-          <TabItem tabId="file-explorer">File Explorer</TabItem>
+          <TabItem tabId="file-explorer">Files</TabItem>
           <TabItem tabId="logs">Logs</TabItem>
         </ul>
 
-        {/* Mobile layout tabs taking the whole space*/}
-        <div className="flex flex-1 w-full overflow-hidden pt-2 md:hidden">
+        {/* Mobile layout */}
+        <div className="flex flex-1 w-full overflow-hidden md:hidden">
           <TabContent tabId="chat" className="flex-1">
             <Chat className="flex-1 overflow-hidden" />
           </TabContent>
@@ -43,8 +44,8 @@ export default async function Page() {
           </TabContent>
         </div>
 
-        {/* Desktop layout with horizontal and vertical panels */}
-        <div className="hidden flex-1 w-full min-h-0 overflow-hidden pt-2 md:flex">
+        {/* Desktop layout */}
+        <div className="hidden flex-1 w-full min-h-0 overflow-hidden p-2 md:flex">
           <Horizontal
             defaultLayout={horizontalSizes ?? [50, 50]}
             left={<Chat className="flex-1 overflow-hidden" />}
@@ -58,6 +59,8 @@ export default async function Page() {
             }
           />
         </div>
+
+        <Footer />
       </div>
     </>
   )

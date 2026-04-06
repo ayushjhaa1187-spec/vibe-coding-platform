@@ -68,7 +68,7 @@ export const createSandbox = ({ writer }: Params) =>
           },
         })
 
-        console.log('Error creating Sandbox:', richError.error)
+        console.error('Error creating Sandbox:', richError.error)
         return richError.message
       }
     },
